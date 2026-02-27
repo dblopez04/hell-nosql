@@ -5,6 +5,13 @@ DB_FILE="./data.db"
 PROMPT="$(whoami)@hnsql ~ "
 INDEX_KEYS=()
 INDEX_VALUES=()
+DEBUG=false
+
+while getopts "d" flag; do
+    case "$flag" in
+        d) DEBUG=true ;;
+    esac
+done
 
 index_set() {
   local key=$1
@@ -24,6 +31,8 @@ db_set() {
   local value=$2
 
   echo "SET $key $value" >>"$DB_FILE"
+
+  index_set "$key" "$value"
 }
 
 db_get() {
@@ -45,6 +54,16 @@ init_index() {
   done <"$DB_FILE"
 }
 
+debug_index() {
+  if [[ "$DEBUG" == true ]]; then
+    echo "--INDEX--"
+    for i in "${!INDEX_KEYS[@]}"; do
+      echo "${INDEX_KEYS[$i]} ${INDEX_VALS[$i]}"
+    done
+    echo ""
+  fi
+}
+
 
 
 if [[ ! -f "$DB_FILE" ]]; then
@@ -52,6 +71,7 @@ if [[ ! -f "$DB_FILE" ]]; then
 fi
 
 init_index
+debug_index
 
 while read -rp "$PROMPT" cmd key value; do
   case "$cmd" in
@@ -66,4 +86,5 @@ while read -rp "$PROMPT" cmd key value; do
     exit
     ;;
   esac
+  debug_index
 done
